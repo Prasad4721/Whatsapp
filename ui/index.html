@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp PA</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>WhatsApp PA</h1>
+            <div id="status-badge" class="badge">INITIALIZING</div>
+        </header>
+
+        <main>
+            <div id="qr-container" class="hidden">
+                <h2>Scan QR Code</h2>
+                <p>Open WhatsApp on your phone, go to Linked Devices, and scan this code.</p>
+                <div id="qrcode"></div>
+            </div>
+
+            <div class="logs-section">
+                <h2>Terminal Logs</h2>
+                <div id="logs-container">
+                    <!-- Logs will appear here -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- QRCode library -->
+    <script src="../node_modules/qrcode/build/qrcode.min.js"></script>
+    <script src="renderer.js"></script>
+</body>
+</html>

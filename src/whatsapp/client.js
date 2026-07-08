@@ -1,0 +1,51 @@
+const { Client, LocalAuth } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
+const chalk = require('chalk');
+const logger = require('../logger');
+const { handleIncomingMessage } = require('../services/messageHandler');
+const { formatBanner } = require('../utils/formatter');
+const appEvents = require('../events');
+
+function createWhatsAppClient() {
+  const client = new Client({
+    authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
+    puppeteer: {
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    },
+  });
+
+  client.on('qr', (qr) => {
+    console.log(formatBanner('SCAN THIS QR CODE WITH WHATSAPP > LINKED DEVICES'));
+    qrcode.generate(qr, { small: true });
+    logger.info('QR code generated — waiting for scan.');
+    appEvents.emit('qr', qr);
+  });
+
+  client.on('authenticated', () => {
+    logger.info('WhatsApp authenticated successfully.');
+    appEvents.emit('status', 'authenticated');
+  });
+
+  client.on('auth_failure', (msg) => {
+    logger.error(`WhatsApp authentication failed: ${msg}`);
+  });
+
+  client.on('ready', () => {
+    console.log(formatBanner('✅ PA IS ONLINE — MONITORING WHATSAPP'));
+    logger.info('WhatsApp client ready. PA is now monitoring incoming messages.');
+    appEvents.emit('status', 'ready');
+  });
+
+  client.on('disconnected', (reason) => {
+    logger.warn(`WhatsApp disconnected: ${reason}`);
+  });
+
+  client.on('message', async (msg) => {
+    await handleIncomingMessage(msg, client);
+  });
+
+  return client;
+}
+
+module.exports = { createWhatsAppClient };
