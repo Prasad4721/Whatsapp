@@ -3,7 +3,9 @@ const qrContainer = document.getElementById('qr-container');
 const qrcodeElement = document.getElementById('qrcode');
 const statusBadge = document.getElementById('status-badge');
 
-window.electronAPI.onLogEntry((log) => {
+const socket = io();
+
+socket.on('log-entry', (log) => {
     const entry = document.createElement('div');
     entry.className = `log-entry log-${log.level.toLowerCase().replace(/\x1b\[[0-9;]*m/g, '')}`;
     // Strip ANSI codes for frontend display
@@ -16,7 +18,7 @@ window.electronAPI.onLogEntry((log) => {
     logsContainer.scrollTop = logsContainer.scrollHeight;
 });
 
-window.electronAPI.onQrCode((qrString) => {
+socket.on('qr-code', (qrString) => {
     // Show QR container
     qrContainer.classList.remove('hidden');
     
@@ -40,7 +42,7 @@ window.electronAPI.onQrCode((qrString) => {
     statusBadge.className = 'badge auth';
 });
 
-window.electronAPI.onStatusUpdate((status) => {
+socket.on('status-update', (status) => {
     if (status === 'authenticated' || status === 'ready') {
         qrContainer.classList.add('hidden');
         statusBadge.textContent = status.toUpperCase();

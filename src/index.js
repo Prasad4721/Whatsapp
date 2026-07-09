@@ -3,6 +3,11 @@ const logger = require('./logger');
 const { createWhatsAppClient } = require('./whatsapp/client');
 const { startAllSchedulers } = require('./services/scheduler');
 const { formatBanner } = require('./utils/formatter');
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+const appEvents = require('./events');
 
 async function main() {
   validateConfig(logger);
@@ -11,6 +16,35 @@ async function main() {
   logger.info('Starting PA backend...');
   logger.info(`AI model: ${config.groq.model}`);
   logger.info(`Notify threshold: ${config.behavior.notifyThreshold}`);
+
+  // Setup Express and Socket.IO
+  const app = express();
+  const server = http.createServer(app);
+  const io = new Server(server);
+
+  app.use(express.static(path.join(__dirname, '../ui')));
+  app.use('/node_modules', express.static(path.join(__dirname, '../node_modules')));
+
+  io.on('connection', (socket) => {
+    logger.info('Web client connected');
+  });
+
+  appEvents.on('log', (logEntry) => {
+    io.emit('log-entry', logEntry);
+  });
+
+  appEvents.on('qr', (qrCode) => {
+    io.emit('qr-code', qrCode);
+  });
+
+  appEvents.on('status', (status) => {
+    io.emit('status-update', status);
+  });
+
+  const PORT = process.env.PORT || 3000;
+  server.listen(PORT, () => {
+    logger.info(`Web interface running at http://localhost:${PORT}`);
+  });
 
   const client = createWhatsAppClient();
   startAllSchedulers();
