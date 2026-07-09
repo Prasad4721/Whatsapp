@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
+    "postinstall": "npx puppeteer browsers install chrome",
     "build": "npm install && npx puppeteer browsers install chrome",
     "start": "node src/index.js",
     "dev": "node --watch src/index.js"
