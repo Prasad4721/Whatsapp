@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: whatsapp-pa
+    env: docker
+    plan: starter
+    disk:
+      name: whatsapp-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: WWEBJS_AUTH_PATH
+        value: /data/.wwebjs_auth

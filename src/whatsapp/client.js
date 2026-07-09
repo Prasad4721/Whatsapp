@@ -6,11 +6,14 @@ const { formatBanner } = require('../utils/formatter');
 const appEvents = require('../events');
 
 function createWhatsAppClient() {
+  const authPath = process.env.WWEBJS_AUTH_PATH || './.wwebjs_auth';
+
   const client = new Client({
-    authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
+    authStrategy: new LocalAuth({ dataPath: authPath }),
     puppeteer: {
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     },
   });
 
