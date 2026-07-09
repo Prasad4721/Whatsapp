@@ -1,5 +1,4 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
 const chalk = require('chalk');
 const logger = require('../logger');
 const { handleIncomingMessage } = require('../services/messageHandler');
@@ -17,8 +16,7 @@ function createWhatsAppClient() {
 
   client.on('qr', (qr) => {
     console.log(formatBanner('SCAN THIS QR CODE WITH WHATSAPP > LINKED DEVICES'));
-    qrcode.generate(qr, { small: true });
-    logger.info('QR code generated — waiting for scan.');
+    logger.info('QR code generated — waiting for scan on web UI.');
     appEvents.emit('qr', qr);
   });
 
