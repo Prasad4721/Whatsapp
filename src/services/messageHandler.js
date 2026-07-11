@@ -6,13 +6,15 @@ const { config } = require('../config');
 
 async function handleIncomingMessage(msg, client) {
   try {
+    if (msg.from === 'status@broadcast' || msg.to === 'status@broadcast') return;
+    if (msg.fromMe) return; // we only analyze incoming messages, not our own
+    if (!msg.body || msg.body.trim().length === 0) return; // skip media-only with no caption for now
+
     const chat = await msg.getChat();
     const contact = await msg.getContact();
 
     if (config.whatsapp.ignoreGroups && chat.isGroup) return;
     if (config.whatsapp.ignoreStatus && chat.isReadOnly) return;
-    if (msg.fromMe) return; // we only analyze incoming messages, not our own
-    if (!msg.body || msg.body.trim().length === 0) return; // skip media-only with no caption for now
 
     const senderName = contact.pushname || contact.name || contact.number || 'Unknown';
     const chatId = chat.id._serialized;
