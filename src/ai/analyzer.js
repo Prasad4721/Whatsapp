@@ -100,21 +100,33 @@ async function analyzeMessage({ messageText, senderName, relationship, isGroup, 
     };
   }
 
-  // Wrap the plain text reply in a dummy object so the terminal logger and other integrations don't break
-  return {
-    priority_score: 50,
-    priority: 'Unknown',
-    category: 'Unknown',
-    sentiment: 'Unknown',
-    summary: 'Auto-reply generated based on custom prompt.',
-    key_points: [],
-    action_items: [],
-    reminders: [],
-    reply_suggestions: [result], // The raw text from the AI
-    notify_user: false,
-    security_flag: 'none',
-    confidence: 100,
-  };
+  let parsed;
+  try {
+    // Sometimes the model might include markdown code blocks despite instructions, so we clean it just in case
+    const cleaned = result.replace(/^```json\n?/, '').replace(/```$/, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch (err) {
+    logger.error('Failed to parse Groq response as JSON', { result });
+    return {
+      priority_score: 0,
+      priority: 'Unknown',
+      category: 'Unknown',
+      sentiment: 'Unknown',
+      summary: 'Failed to parse AI response.',
+      key_points: [],
+      action_items: [],
+      reminders: [],
+      reply_suggestions: [],
+      notify_user: false,
+      notify_reason: 'Parse error.',
+      security_flag: 'none',
+      confidence: 0,
+      handled_locally: false,
+      error: true,
+    };
+  }
+
+  return parsed;
 }
 
 module.exports = { analyzeMessage };
