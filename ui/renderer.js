@@ -26,15 +26,14 @@ socket.on('qr-code', (qrString) => {
     qrcodeElement.innerHTML = '';
     
     // Generate new QR code using QRCode library included in index.html
-    const canvas = document.createElement('canvas');
-    QRCode.toCanvas(canvas, qrString, {
+    QRCode.toCanvas(qrString, {
         width: 250,
         margin: 2,
         color: {
             dark: '#0f172a',
             light: '#ffffff'
         }
-    }, function (err) {
+    }, function (err, canvas) {
         if (err) console.error(err);
         qrcodeElement.appendChild(canvas);
     });

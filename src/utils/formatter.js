@@ -37,41 +37,6 @@ function formatAnalysis({ senderName, chatId, isGroup, messageText }, analysis) 
   out.push('');
   out.push(`${chalk.bold('Summary:')} ${analysis.summary}`);
 
-  if (analysis.business_context) {
-    const bc = analysis.business_context;
-    const parts = [];
-    if (bc.relationship_type && bc.relationship_type !== 'Unknown') parts.push(`Rel: ${bc.relationship_type}`);
-    if (bc.client_tier && bc.client_tier !== 'Unknown' && bc.client_tier !== 'Not Applicable') parts.push(`Tier: ${bc.client_tier}`);
-    if (bc.deal_stage && bc.deal_stage !== 'Unknown' && bc.deal_stage !== 'Not Applicable') parts.push(`Stage: ${bc.deal_stage}`);
-    if (bc.churn_or_complaint_risk && bc.churn_or_complaint_risk !== 'None') parts.push(chalk.red(`Risk: ${bc.churn_or_complaint_risk}`));
-    if (bc.revenue_mentioned && bc.revenue_mentioned.amount) {
-      parts.push(`Revenue: ${bc.revenue_mentioned.amount} ${bc.revenue_mentioned.currency || ''} (${bc.revenue_mentioned.context || ''})`);
-    }
-    if (bc.competitor_mentioned) parts.push(`Competitor: ${bc.competitor_mentioned}`);
-    if (bc.upsell_or_opportunity_signal) parts.push(`Upsell: ${bc.upsell_or_opportunity_signal}`);
-    
-    if (parts.length > 0) {
-      out.push('');
-      out.push(chalk.bold('Business Context:'));
-      parts.forEach(p => out.push(`  • ${p}`));
-    }
-  }
-
-  if (analysis.sla_or_contract_deadline && analysis.sla_or_contract_deadline.detected) {
-    const sla = analysis.sla_or_contract_deadline;
-    out.push('');
-    out.push(chalk.bgRed.white.bold(' ⚠ SLA/DEADLINE DETECTED '));
-    out.push(`  • ${sla.description} (Due: ${sla.due_date_text || 'Unknown'})`);
-  }
-
-  if (analysis.escalation && analysis.escalation.required) {
-    const esc = analysis.escalation;
-    out.push('');
-    out.push(chalk.bgRed.white.bold(' ⚠ ESCALATION REQUIRED '));
-    out.push(`  • Reason: ${esc.reason}`);
-    out.push(`  • Route to: ${esc.suggested_recipient || 'Team'}`);
-  }
-
   if (analysis.key_points && analysis.key_points.length) {
     out.push('');
     out.push(chalk.bold('Key Points:'));
