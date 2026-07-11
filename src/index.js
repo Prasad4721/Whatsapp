@@ -8,6 +8,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const appEvents = require('./events');
+const QRCode = require('qrcode');
 
 async function main() {
   validateConfig(logger);
@@ -40,10 +41,19 @@ async function main() {
     io.emit('log-entry', logEntry);
   });
 
-  appEvents.on('qr', (qrCode) => {
+  appEvents.on('qr', async (qrCode) => {
     currentStatus = 'needs_scan';
-    currentQr = qrCode;
-    io.emit('qr-code', qrCode);
+    try {
+      const qrDataUrl = await QRCode.toDataURL(qrCode, {
+        width: 250,
+        margin: 2,
+        color: { dark: '#0f172a', light: '#ffffff' }
+      });
+      currentQr = qrDataUrl;
+      io.emit('qr-code', qrDataUrl);
+    } catch (err) {
+      logger.error(`Error generating QR code image: ${err.message}`);
+    }
   });
 
   appEvents.on('status', (status) => {

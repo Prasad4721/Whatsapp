@@ -18,25 +18,12 @@ socket.on('log-entry', (log) => {
     logsContainer.scrollTop = logsContainer.scrollHeight;
 });
 
-socket.on('qr-code', (qrString) => {
+socket.on('qr-code', (qrDataUrl) => {
     // Show QR container
     qrContainer.classList.remove('hidden');
     
-    // Clear previous QR code
-    qrcodeElement.innerHTML = '';
-    
-    // Generate new QR code using QRCode library included in index.html
-    QRCode.toCanvas(qrString, {
-        width: 250,
-        margin: 2,
-        color: {
-            dark: '#0f172a',
-            light: '#ffffff'
-        }
-    }, function (err, canvas) {
-        if (err) console.error(err);
-        qrcodeElement.appendChild(canvas);
-    });
+    // Set QR code image directly from the server
+    qrcodeElement.innerHTML = `<img src="${qrDataUrl}" alt="WhatsApp QR Code" />`;
     
     statusBadge.textContent = 'NEEDS SCAN';
     statusBadge.className = 'badge auth';
