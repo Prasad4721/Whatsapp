@@ -43,7 +43,11 @@ async function main() {
 
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {
-    logger.info(`Web interface running at http://localhost:${PORT}`);
+    if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+      logger.info(`Web interface running at https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
+    } else {
+      logger.info(`Web interface running at http://localhost:${PORT}`);
+    }
   });
 
   const client = createWhatsAppClient();
