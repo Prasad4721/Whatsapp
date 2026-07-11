@@ -25,8 +25,15 @@ async function main() {
   app.use(express.static(path.join(__dirname, '../ui')));
   app.use('/node_modules', express.static(path.join(__dirname, '../node_modules')));
 
+  let currentStatus = 'initializing';
+  let currentQr = null;
+
   io.on('connection', (socket) => {
     logger.info('Web client connected');
+    socket.emit('status-update', currentStatus);
+    if (currentStatus === 'needs_scan' && currentQr) {
+      socket.emit('qr-code', currentQr);
+    }
   });
 
   appEvents.on('log', (logEntry) => {
@@ -34,10 +41,16 @@ async function main() {
   });
 
   appEvents.on('qr', (qrCode) => {
+    currentStatus = 'needs_scan';
+    currentQr = qrCode;
     io.emit('qr-code', qrCode);
   });
 
   appEvents.on('status', (status) => {
+    currentStatus = status;
+    if (status === 'authenticated' || status === 'ready') {
+      currentQr = null; // Clear QR when authenticated
+    }
     io.emit('status-update', status);
   });
 
