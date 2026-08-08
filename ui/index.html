@@ -3,25 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp PA</title>
+    <title>WhatsApp PA — AI Executive Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="background-mesh"></div>
     <div class="container">
-        <header>
-            <h1>WhatsApp PA</h1>
-            <div id="status-badge" class="badge">INITIALIZING</div>
+        <header class="glass-panel">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-dot"></div>
+                    <h1>WhatsApp PA</h1>
+                </div>
+                <span class="subtitle">AI Executive Assistant</span>
+            </div>
+            <div class="header-right">
+                <div id="status-badge" class="badge">INITIALIZING</div>
+            </div>
         </header>
 
         <main>
-            <div id="qr-container" class="hidden">
-                <h2>Scan QR Code</h2>
-                <p>Open WhatsApp on your phone, go to Linked Devices, and scan this code.</p>
-                <div id="qrcode"></div>
+            <div id="qr-container" class="glass-panel card hidden">
+                <div class="card-header">
+                    <h2>Authentication Required</h2>
+                    <p>Scan this QR Code with your WhatsApp app to link your account.</p>
+                </div>
+                <div class="qr-wrapper">
+                    <div id="qrcode"></div>
+                </div>
             </div>
 
-            <div class="logs-section">
-                <h2>Terminal Logs</h2>
+            <div class="logs-section glass-panel">
+                <div class="logs-header">
+                    <h2>Terminal Stream</h2>
+                    <div class="pulse-indicator"></div>
+                </div>
                 <div id="logs-container">
                     <!-- Logs will appear here -->
                 </div>

@@ -1,87 +1,104 @@
-const { config, validateConfig } = require('./config');
-const logger = require('./logger');
-const { createWhatsAppClient } = require('./whatsapp/client');
-const { startAllSchedulers } = require('./services/scheduler');
+const Container = require('./core/Container');
+const EventBus = require('./core/EventBus');
+const Config = require('./config/index');
+const Logger = require('./shared/Logger');
 const { formatBanner } = require('./utils/formatter');
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const path = require('path');
-const appEvents = require('./events');
-const QRCode = require('qrcode');
+
+// Database Repositories
+const JsonDatabase = require('./infrastructure/database/JsonDatabase');
+const ContactRepository = require('./infrastructure/database/repositories/ContactRepository');
+const MemoryRepository = require('./infrastructure/database/repositories/MemoryRepository');
+const TaskRepository = require('./infrastructure/database/repositories/TaskRepository');
+
+// Infrastructure Adapters
+const WhatsAppAdapter = require('./infrastructure/whatsapp/WhatsAppAdapter');
+const WebDashboard = require('./infrastructure/web/WebDashboard');
+
+// AI Agents
+const GroqAdapter = require('./ai/GroqAdapter');
+const MasterAgent = require('./ai/MasterAgent');
+const MemoryAgent = require('./ai/MemoryAgent');
+const ContactAgent = require('./ai/ContactAgent');
+const TaskAgent = require('./ai/TaskAgent');
+const ReportAgent = require('./ai/ReportAgent');
+
+// Plugins
+const VisionPlugin = require('./ai/plugins/VisionPlugin');
+const VoicePlugin = require('./ai/plugins/VoicePlugin');
+const DocumentPlugin = require('./ai/plugins/DocumentPlugin');
+
+// Schedulers
+const ReminderScheduler = require('./scheduler/ReminderScheduler');
+const FollowUpScheduler = require('./scheduler/FollowUpScheduler');
+const ReportScheduler = require('./scheduler/ReportScheduler');
 
 async function main() {
-  validateConfig(logger);
+  // 1. Initialize DI Container
+  const container = new Container();
+
+  // 2. Register Core Services
+  const config = new Config();
+  container.register('Config', config);
+  
+  const eventBus = new EventBus();
+  container.register('EventBus', eventBus);
+  
+  const logger = new Logger(container);
+  container.register('Logger', logger);
+
+  config.validate(logger);
 
   console.log(formatBanner('PA — AI EXECUTIVE ASSISTANT (Backend)'));
   logger.info('Starting PA backend...');
   logger.info(`AI model: ${config.groq.model}`);
-  logger.info(`Notify threshold: ${config.behavior.notifyThreshold}`);
 
-  // Setup Express and Socket.IO
-  const app = express();
-  const server = http.createServer(app);
-  const io = new Server(server);
+  // 3. Register Data Layer
+  container.register('JsonDatabase', new JsonDatabase(container));
+  container.register('ContactRepository', new ContactRepository(container));
+  container.register('MemoryRepository', new MemoryRepository(container));
+  container.register('TaskRepository', new TaskRepository(container));
 
-  app.use(express.static(path.join(__dirname, '../ui')));
-  app.use('/node_modules', express.static(path.join(__dirname, '../node_modules')));
+  // 4. Register Infrastructure Adapters
+  container.register('WhatsAppAdapter', new WhatsAppAdapter(container));
+  container.register('WebDashboard', new WebDashboard(container));
 
-  let currentStatus = 'initializing';
-  let currentQr = null;
+  // 5. Register AI Agents
+  container.register('GroqAdapter', new GroqAdapter(container));
+  container.register('MasterAgent', new MasterAgent(container));
+  container.register('MemoryAgent', new MemoryAgent(container));
+  container.register('ContactAgent', new ContactAgent(container));
+  container.register('TaskAgent', new TaskAgent(container));
+  container.register('ReportAgent', new ReportAgent(container));
+  container.register('VisionPlugin', new VisionPlugin(container));
+  container.register('VoicePlugin', new VoicePlugin(container));
+  container.register('DocumentPlugin', new DocumentPlugin(container));
 
-  io.on('connection', (socket) => {
-    logger.info('Web client connected');
-    socket.emit('status-update', currentStatus);
-    if (currentStatus === 'needs_scan' && currentQr) {
-      socket.emit('qr-code', currentQr);
-    }
-  });
+  // 6. Register Schedulers
+  container.register('ReminderScheduler', new ReminderScheduler(container));
+  container.register('FollowUpScheduler', new FollowUpScheduler(container));
+  container.register('ReportScheduler', new ReportScheduler(container));
 
-  appEvents.on('log', (logEntry) => {
-    io.emit('log-entry', logEntry);
-  });
+  // 7. Start Services
+  const webDashboard = container.resolve('WebDashboard');
+  const whatsappAdapter = container.resolve('WhatsAppAdapter');
+  const reminderScheduler = container.resolve('ReminderScheduler');
+  const followUpScheduler = container.resolve('FollowUpScheduler');
 
-  appEvents.on('qr', async (qrCode) => {
-    currentStatus = 'needs_scan';
-    try {
-      const qrDataUrl = await QRCode.toDataURL(qrCode, {
-        width: 250,
-        margin: 2,
-        color: { dark: '#0f172a', light: '#ffffff' }
-      });
-      currentQr = qrDataUrl;
-      io.emit('qr-code', qrDataUrl);
-    } catch (err) {
-      logger.error(`Error generating QR code image: ${err.message}`);
-    }
-  });
+  webDashboard.start();
+  reminderScheduler.start();
+  followUpScheduler.start();
+  
+  // We initialize the whatsapp client after the dashboard is listening
+  // so the QR code can be served immediately.
+  whatsappAdapter.start();
 
-  appEvents.on('status', (status) => {
-    currentStatus = status;
-    if (status === 'authenticated' || status === 'ready') {
-      currentQr = null; // Clear QR when authenticated
-    }
-    io.emit('status-update', status);
-  });
-
-  const PORT = process.env.PORT || 3000;
-  server.listen(PORT, () => {
-    if (process.env.RAILWAY_PUBLIC_DOMAIN) {
-      logger.info(`Web interface running at https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
-    } else {
-      logger.info(`Web interface running at http://localhost:${PORT}`);
-    }
-  });
-
-  const client = createWhatsAppClient();
-  startAllSchedulers();
-
-  client.initialize();
-
+  // 8. Graceful Shutdown
   const shutdown = async (signal) => {
     logger.info(`Received ${signal}. Shutting down gracefully...`);
     try {
-      await client.destroy();
+      reminderScheduler.stop();
+      followUpScheduler.stop();
+      await whatsappAdapter.stop();
       logger.info('WhatsApp client destroyed cleanly.');
     } catch (err) {
       logger.error(`Error during shutdown: ${err.message}`);

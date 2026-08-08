@@ -1,127 +1,91 @@
-# PA — WhatsApp AI Executive Assistant (Backend, Terminal Only)
+# WhatsApp-PA: AI Executive Personal Assistant
 
-A Node.js backend that connects to your real WhatsApp account (via WhatsApp Web),
-analyzes incoming messages with Groq's LLM API, and prints structured,
-formatted results directly in your terminal — priority, summary, action items,
-reminders, tone-matched reply suggestions, and a notify/silent decision.
+Welcome to **WhatsApp-PA**, an autonomous, Event-Driven AI Executive Assistant that lives directly on WhatsApp, built for scale.
 
-No UI. No database server. Just a terminal process and JSON files on disk.
+This project was completely transformed from a simple procedural bot into a **Clean Architecture Multi-Agent System**. It is designed to act as a highly competent Chief of Staff for executives, intelligently managing tasks, maintaining a lightweight CRM, scheduling reminders, and parsing multi-modal messages.
 
 ---
 
-## 1. Requirements
+## 🚀 Features
 
-- Node.js 18+
-- A WhatsApp account on your phone (to scan the QR code)
-- A free Groq API key: https://console.groq.com/keys
+- **Multi-Agent Architecture**: Discrete AI agents (`MasterAgent`, `MemoryAgent`, `ContactAgent`, `TaskAgent`, `ReportAgent`) collaborate via an asynchronous EventBus.
+- **Glassmorphic Admin Dashboard**: A premium Web UI to monitor logs, scan the WhatsApp QR code, and manage system state.
+- **Proactive Schedulers**: Cron-based scheduling engine that generates daily morning briefs, nightly follow-ups, and calendar digests.
+- **Multi-Modal Hooks**: Native interceptors for Vision (Images), Voice Notes (Audio), and Documents (PDFs).
+- **Zero-Friction Configurator**: Use `npm run setup` for an interactive CLI setup wizard.
+- **Railway Cloud Ready**: Containerized with a robust `Dockerfile` optimized for headless Puppeteer.
 
-## 2. Install
+---
 
-```bash
-cd whatsapp-pa
-npm install
-```
+## 🏗️ Architecture
 
-> Note: `whatsapp-web.js` depends on Puppeteer, which downloads a bundled
-> Chromium on install. That step needs internet access and may take a few minutes.
+The system enforces strict **Inversion of Control (IoC)** via a Dependency Injection Container. 
 
-## 3. Configure
+1. **`WhatsAppAdapter`**: Bridges `whatsapp-web.js` to the `EventBus`. It knows nothing about the AI.
+2. **`EventBus`**: The central nervous system. Everything communicates by publishing and subscribing to events (`message.received`, `message.media`, `report.daily`).
+3. **`GroqAdapter`**: Handles fast, cheap LLM inference using Llama 3 models.
+4. **Agents**: Subscribe to the `EventBus`, mutate the local Repositories (`JsonDatabase`), and publish responses.
 
-```bash
-cp .env.example .env
-```
+---
 
-Open `.env` and set:
+## 🛠️ Quick Start (Local)
 
-```
-GROQ_API_KEY=your_real_key_here
-```
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-Adjust the other settings if you want (notify threshold, cron schedules,
-whether to ignore group chats, etc). Defaults are sensible.
+2. **Run the Setup Wizard**
+   ```bash
+   npm run setup
+   ```
+   *This interactive CLI will configure your `.env` file and ask for your Groq API keys.*
 
-## 4. Run
+3. **Start the Assistant**
+   ```bash
+   npm start
+   ```
 
-```bash
-npm start
-```
+4. **Connect WhatsApp**
+   - Open your browser to `http://localhost:<PORT>` (Default `8080`).
+   - Scan the QR code using your WhatsApp (Linked Devices).
 
-- The first time, a QR code will print in your terminal.
-- Open WhatsApp on your phone → **Settings → Linked Devices → Link a Device** → scan it.
-- Your session is saved to `.wwebjs_auth/` so you won't need to re-scan on future runs.
-- Once you see `✅ PA IS ONLINE`, incoming messages will be analyzed live.
+---
 
-Stop it any time with `Ctrl+C` — it shuts down the WhatsApp session cleanly.
+## ☁️ Deployment (Railway)
 
-## 5. What you'll see
+This repository is optimized for one-click deployment on [Railway](https://railway.app/). 
 
-Every incoming message you receive gets a block like:
+1. **Push to GitHub**: Make sure this codebase is in a GitHub repository.
+2. **Create Railway Project**: Log into Railway, click **New Project** -> **Deploy from GitHub repo**.
+3. **Select Repo**: Choose your repository.
+4. **Environment Variables**: Add your `.env` variables to Railway (e.g., `GROQ_API_KEY`, `MASTER_PHONE`, `PORT`).
+5. **Deploy**: Railway will automatically detect the `Dockerfile` and build the container with all required Chromium dependencies!
 
-```
-════════════════════════════════════════════════════════
-PA · Rahul Sharma
-"Can you send the report before 6 PM today? Client is waiting."
-────────────────────────────────────────────────────────
-Priority:  High  (85/100)
-Category: Office   Sentiment: Urgent
+*Note: Once deployed, navigate to the Railway-generated URL to access the Admin Dashboard and scan the QR code.*
 
-Summary: Rahul needs the report sent before 6 PM; client is waiting.
+---
 
-Action Items:
-  ☐ Send the report [High] · due: 7/3/2026, 6:00:00 PM
+## 📚 Roadmap (Completed)
 
-Suggested Reminder(s):
-  ⏰ Follow up if report isn't sent by 5:30 PM (7/3/2026, 5:30:00 PM)
+This project was built across 15 structured modules:
 
-Suggested Replies:
-  1. On it, will send by 6.
-  2. Sure, sending it over shortly!
-  3. Got it.
+- [x] Phase 1: Architectural Audit & Planning
+- [x] Phase 2: Repository Pattern & Storage Re-write
+- [x] Phase 3: Adapter Decoupling (WhatsApp & HTTP)
+- [x] Phase 4: Foundational Agent Framework
+- [x] Phase 5: Parallel Memory Engine
+- [x] Phase 6: Autonomous CRM Plugin
+- [x] Phase 7: Smart Task Extractor
+- [x] Phase 8: Chrono & Node-Cron Schedulers
+- [x] Phase 9: Unified Bootstrapper (DI Container)
+- [x] Phase 10: Monolith Cleanup
+- [x] Phase 11: CLI Configurator (`pa-setup.js`)
+- [x] Phase 12: Premium Glassmorphic UI Refactor
+- [x] Phase 13: Daily Reporting Engines
+- [x] Phase 14: Vision, Voice, and Document Plugin Hooks
+- [x] Phase 15: Documentation & Cloud Deployment
 
-Notification:  NOTIFY  — Time-sensitive request from a work contact.
-Confidence: 91%
-════════════════════════════════════════════════════════
-```
+---
 
-Trivial messages ("ok", "haha", "good morning") are handled locally with
-no API call and no notification — they're logged quietly and skipped.
-
-Scheduled automatically:
-- **Daily brief** — pending tasks + upcoming reminders (default 8:00 AM)
-- **Evening report** — what got processed/notified today (default 9:00 PM)
-- **Weekly analytics** — message volume by category/contact (default Sunday 9:00 AM)
-- **Reminder watcher** — checks every minute for anything due, alerts in terminal
-
-## 6. Where things are stored
-
-| Path | What |
-|---|---|
-| `data/contacts.json` | Known contacts + relationship labels |
-| `data/conversations.json` | Rolling last-10-message context per chat (for tone matching) |
-| `data/tasks.json` | Extracted action items |
-| `data/reminders.json` | Extracted reminders |
-| `data/messages_log.json` | Lightweight metadata log for analytics (category/priority/notified — not full message content) |
-| `logs/pa.log` | Full structured logs (JSON lines) |
-| `logs/errors.log` | Errors only |
-| `.wwebjs_auth/` | Your WhatsApp session — treat like a password, never share or commit it |
-
-## 7. Safety behavior built in
-
-- **OTPs / verification codes are never displayed, logged, or sent to the AI.** They're detected locally and suppressed before analysis even happens.
-- **Suspected phishing/financial-fraud patterns** (urgent link + request for credentials/payment) are flagged and force a notification rather than being acted on.
-- **PA never sends any message on your behalf.** It only ever prints *suggestions* — sending is always your decision, done by you in WhatsApp.
-- **No fabricated deadlines.** If the AI can't confidently extract a date, it's left null rather than guessed.
-
-## 8. Extending it
-
-- `src/ai/prompt.js` — the system prompt driving all analysis. Edit categories, tone rules, or the JSON schema here.
-- `src/ai/analyzer.js` — local triage rules (what skips the API entirely) and security pre-filters.
-- `src/utils/formatter.js` — terminal output styling.
-- `src/services/scheduler.js` — cron jobs for daily/evening/weekly reports.
-
-## 9. Troubleshooting
-
-- **QR code won't scan / times out** — restart with `npm start`, make sure your phone has internet.
-- **"GROQ_API_KEY is missing"** — check `.env` exists and is filled in (not `.env.example`).
-- **Puppeteer/Chromium errors on Linux servers** — you may need `sudo apt install -y libgbm-dev` or similar system libraries; check the whatsapp-web.js docs for your OS.
-- **Session keeps logging out** — don't delete `.wwebjs_auth/` between runs, and avoid running two instances with the same session at once.
+*Built with Node.js, Express, Socket.IO, whatsapp-web.js, and Groq.*

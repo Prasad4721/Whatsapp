@@ -8,7 +8,9 @@
     "postinstall": "npx puppeteer browsers install chrome",
     "build": "npm install && npx puppeteer browsers install chrome",
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "test": "jest",
+    "setup": "node bin/pa-setup.js"
   },
   "dependencies": {
     "axios": "^1.7.7",
@@ -16,6 +18,7 @@
     "chrono-node": "^2.7.7",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
+    "inquirer": "^8.2.6",
     "node-cron": "^3.0.3",
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.3",
@@ -24,5 +27,8 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }
