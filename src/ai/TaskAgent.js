@@ -32,7 +32,7 @@ class TaskAgent extends AgentBase {
   }
 
   async extractTasks(payload) {
-    const { from, body } = payload;
+    const { from, senderName, body } = payload;
     
     // Quick trivial filter
     if (/^(ok|okay|k|👍|hi|hello|hey|gm|gn)$/i.test(body.trim())) {
@@ -40,8 +40,8 @@ class TaskAgent extends AgentBase {
     }
 
     try {
-      this.logger.info(`TaskAgent analyzing message from ${from}`);
-      const prompt = `Current Time: ${new Date().toISOString()}\nMessage from ${from}:\n${body}`;
+      this.logger.info(`TaskAgent analyzing message from ${senderName}`);
+      const prompt = `Current Time: ${new Date().toISOString()}\nMessage from ${senderName}:\n${body}`;
       
       const response = await this.askAI(TASK_EXTRACTION_PROMPT, prompt, true);
       

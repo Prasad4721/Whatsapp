@@ -22,29 +22,29 @@ class MasterAgent extends AgentBase {
   }
 
   async processMessage(payload) {
-    const { from, body, timestamp } = payload;
+    const { from, senderName, body, timestamp } = payload;
     
     // Quick trivial filter to save API calls
     if (/^(ok|okay|k|👍)$/i.test(body.trim())) {
-      this.logger.info(`Ignored trivial message from ${from}`);
+      this.logger.info(`Ignored trivial message from ${senderName}`);
       return;
     }
 
-    this.logger.info(`MasterAgent processing message from ${from}`);
+    this.logger.info(`MasterAgent processing message from ${senderName}`);
 
     try {
-      const response = await this.askAI(MASTER_SYSTEM_PROMPT, `Message from ${from}:\n${body}`, true);
+      const response = await this.askAI(MASTER_SYSTEM_PROMPT, `Message from ${senderName}:\n${body}`, true);
       if (!response) return;
 
       const parsed = JSON.parse(response);
       if (parsed.action === 'reply' && parsed.text) {
-        this.logger.info(`MasterAgent decided to reply to ${from}`);
+        this.logger.info(`MasterAgent decided to reply to ${senderName}`);
         this.eventBus.publish('message.send', {
           to: from,
           text: parsed.text
         });
       } else {
-        this.logger.info(`MasterAgent ignored message from ${from}`);
+        this.logger.info(`MasterAgent ignored message from ${senderName}`);
       }
     } catch (err) {
       this.logger.error(`MasterAgent failed to process message: ${err.message}`);

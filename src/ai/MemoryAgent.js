@@ -28,7 +28,7 @@ class MemoryAgent extends AgentBase {
   }
 
   async extractMemories(payload) {
-    const { from, body } = payload;
+    const { from, senderName, body } = payload;
     
     // Quick trivial filter to save API calls
     if (/^(ok|okay|k|👍|hi|hello|hey|morning|gm|gn)$/i.test(body.trim())) {
@@ -36,8 +36,8 @@ class MemoryAgent extends AgentBase {
     }
 
     try {
-      this.logger.info(`MemoryAgent analyzing message from ${from} for memories`);
-      const response = await this.askAI(MEMORY_EXTRACTION_PROMPT, `Message from ${from}:\n${body}`, true);
+      this.logger.info(`MemoryAgent analyzing message from ${senderName} for memories`);
+      const response = await this.askAI(MEMORY_EXTRACTION_PROMPT, `Message from ${senderName}:\n${body}`, true);
       
       if (!response) return;
 
@@ -48,7 +48,7 @@ class MemoryAgent extends AgentBase {
             contactId: from,
             content: memory
           });
-          this.logger.info(`MemoryAgent saved memory for ${from}: ${memory}`);
+          this.logger.info(`MemoryAgent saved memory for ${senderName}: ${memory}`);
         }
       }
     } catch (err) {

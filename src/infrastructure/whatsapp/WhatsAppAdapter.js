@@ -49,10 +49,19 @@ class WhatsAppAdapter {
       if (msg.from === 'status@broadcast' || msg.to === 'status@broadcast') return;
       if (msg.fromMe) return;
 
+      let senderName = msg.from;
+      try {
+        const contact = await msg.getContact();
+        senderName = contact.name || contact.pushname || msg.from;
+      } catch (err) {
+        this.logger.error(`Failed to fetch contact info for ${msg.from}`);
+      }
+
       if (msg.hasMedia) {
         this.eventBus.publish('message.media', {
           rawMessage: msg,
           from: msg.from,
+          senderName,
           timestamp: new Date().toISOString()
         });
       } else {
@@ -60,6 +69,7 @@ class WhatsAppAdapter {
           rawMessage: msg,
           body: msg.body,
           from: msg.from,
+          senderName,
           timestamp: new Date().toISOString()
         });
       }

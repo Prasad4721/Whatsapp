@@ -3,7 +3,7 @@ const AgentBase = require('./AgentBase');
 const CONTACT_ANALYSIS_PROMPT = `
 You are a CRM (Customer Relationship Management) Agent for an Executive Assistant.
 Your task is to analyze the incoming message and determine if we can extract or update the sender's name and relationship to the user.
-The relationship should be classified as one of: "Friend", "Family", "Client", "Colleague", "VIP", "Unknown".
+The relationship should be classified as one of: "Friend", "Family", "Client", "Colleague", "VIP", "Uncategorized".
 Look for clues like "Hi, this is John", "Hey bro", "Attached is the invoice for our client", etc.
 
 If you can confidently infer the name or relationship, return a JSON object with one or both fields:
@@ -29,11 +29,17 @@ class ContactAgent extends AgentBase {
   }
 
   async analyzeContact(payload) {
-    const { from, body } = payload;
+    const { from, senderName, body } = payload;
     
     // Check existing contact
     const existing = this.contactRepo.findById(from) || {};
     
+    // Auto-update name if it's new
+    if (senderName !== from && existing.name !== senderName) {
+      this.contactRepo.upsert(from, { name: senderName });
+      existing.name = senderName; // Keep local ref updated for prompt
+    }
+
     // Quick trivial filter
     if (/^(ok|okay|k|👍|hi|hello|hey|gm|gn)$/i.test(body.trim())) {
       // Just update lastSeen
@@ -42,8 +48,8 @@ class ContactAgent extends AgentBase {
     }
 
     try {
-      this.logger.info(`ContactAgent analyzing message from ${from}`);
-      const prompt = `Current Profile: ${JSON.stringify(existing)}\nMessage from ${from}:\n${body}`;
+      this.logger.info(`ContactAgent analyzing message from ${senderName}`);
+      const prompt = `Current Profile: ${JSON.stringify(existing)}\nMessage from ${senderName}:\n${body}`;
       
       const response = await this.askAI(CONTACT_ANALYSIS_PROMPT, prompt, true);
       
@@ -58,12 +64,12 @@ class ContactAgent extends AgentBase {
       
       if (parsed.name && parsed.name !== existing.name) {
         updates.name = parsed.name;
-        this.logger.info(`ContactAgent identified name for ${from}: ${parsed.name}`);
+        this.logger.info(`ContactAgent identified name for ${senderName}: ${parsed.name}`);
       }
       
       if (parsed.relationship && parsed.relationship !== existing.relationship) {
         updates.relationship = parsed.relationship;
-        this.logger.info(`ContactAgent identified relationship for ${from}: ${parsed.relationship}`);
+        this.logger.info(`ContactAgent identified relationship for ${senderName}: ${parsed.relationship}`);
       }
       
       this.contactRepo.upsert(from, updates);
