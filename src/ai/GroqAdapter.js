@@ -9,7 +9,7 @@ class GroqAdapter {
   async generateCompletion(systemPrompt, userPrompt, jsonMode = false) {
     try {
       const payload = {
-        model: this.config.get('groq.model') || 'llama3-8b-8192',
+        model: this.config.groq.model || 'llama3-8b-8192',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -22,11 +22,11 @@ class GroqAdapter {
       }
 
       const response = await axios.post(
-        this.config.get('groq.endpoint') || 'https://api.groq.com/openai/v1/chat/completions',
+        this.config.groq.endpoint || 'https://api.groq.com/openai/v1/chat/completions',
         payload,
         {
           headers: {
-            Authorization: `Bearer ${this.config.get('groq.apiKey')}`,
+            Authorization: `Bearer ${this.config.groq.apiKey}`,
             'Content-Type': 'application/json',
           },
           timeout: 20000,
