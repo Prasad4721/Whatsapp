@@ -8,13 +8,21 @@ class WhatsAppAdapter {
     
     const authPath = process.env.WWEBJS_AUTH_PATH || './.wwebjs_auth';
 
+    const puppeteerOptions = {
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    };
+
+    const fs = require('fs');
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+      puppeteerOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    } else if (fs.existsSync('/usr/bin/chromium')) {
+      puppeteerOptions.executablePath = '/usr/bin/chromium';
+    }
+
     this.client = new Client({
       authStrategy: new LocalAuth({ dataPath: authPath }),
-      puppeteer: {
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      },
+      puppeteer: puppeteerOptions,
     });
 
     this._setupListeners();
