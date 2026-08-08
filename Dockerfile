@@ -7,7 +7,7 @@ RUN apt-get update \
       fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
       libxss1 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
       libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 \
-      libasound2 \
+      libasound2 libxkbcommon0 \
       --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 

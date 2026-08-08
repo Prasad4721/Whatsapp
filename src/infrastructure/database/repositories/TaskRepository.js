@@ -9,6 +9,10 @@ class TaskRepository {
     return Object.values(all).filter(t => t.status === 'pending');
   }
 
+  findAll() {
+    return this.db.load(this.collection);
+  }
+
   findById(id) {
     const all = this.db.load(this.collection);
     return all[id] || null;
