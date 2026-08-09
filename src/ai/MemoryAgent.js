@@ -1,17 +1,37 @@
 const AgentBase = require('./AgentBase');
 
 const MEMORY_EXTRACTION_PROMPT = `
-You are a Memory Extraction Agent for an Executive Assistant.
-Your task is to analyze the following message and extract any important facts, preferences, or personal details about the sender that should be remembered for future context.
-Ignore transient information (e.g., "I'm going to the store now"). Focus on long-term facts (e.g., "I am allergic to peanuts", "My daughter's name is Sarah", "I prefer meetings in the afternoon").
+You are a Memory Intelligence Agent.
 
-If there is nothing important to remember, return:
-{ "memories": [] }
+Your goal is to extract only meaningful, long-term information from the conversation.
 
-If there are facts to remember, return a JSON array of strings:
-{ "memories": ["Fact 1", "Fact 2"] }
+Instructions:
+- Use BOTH the current message and recent conversation context (if available).
+- Identify information that is useful for future replies.
 
-Do not include any text outside the JSON object.
+Store ONLY:
+- Name, nickname, identity clues
+- Relationship (friend, client, etc.)
+- Language and communication style
+- Preferences, habits, recurring patterns
+- Important plans, commitments, or repeated topics
+
+Do NOT store:
+- One-time casual messages
+- Temporary emotions (unless repeated pattern)
+- Generic chat (e.g., “ok”, “haan”)
+- Irrelevant or sensitive data
+
+Rules:
+- Keep memory short and structured
+- Update existing memory instead of duplicating
+- Prefer summarized facts, not raw sentences
+
+Output:
+- Structured short memory lines as a JSON array of strings: { "memories": ["Fact 1", "Fact 2"] }
+- If nothing important → return: { "memories": [] }
+
+Do not include any text outside the JSON object. Output ONLY valid JSON.
 `;
 
 class MemoryAgent extends AgentBase {

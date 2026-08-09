@@ -37,6 +37,7 @@ class MasterAgent extends AgentBase {
     super(container, 'MasterAgent');
     this.contactRepo = container.resolve('ContactRepository');
     this.memoryRepo = container.resolve('MemoryRepository');
+    this.whatsappAdapter = container.resolve('WhatsAppAdapter');
     this._subscribeToMessages();
   }
 
@@ -68,14 +69,16 @@ class MasterAgent extends AgentBase {
       // Fetch chat history
       let chatHistory = '';
       try {
-        if (rawMessage && typeof rawMessage.getChat === 'function') {
-          const chat = await rawMessage.getChat();
-          const messages = await chat.fetchMessages({ limit: 8 });
-          const historyLines = messages.map(m => {
-            const sender = m.fromMe ? 'You' : senderName;
-            return `${sender}: ${m.body}`;
-          });
-          chatHistory = `\nRecent Chat History:\n${historyLines.join('\n')}\n`;
+        if (this.whatsappAdapter && this.whatsappAdapter.client) {
+          const chat = await this.whatsappAdapter.client.getChatById(from);
+          if (chat) {
+            const messages = await chat.fetchMessages({ limit: 8 });
+            const historyLines = messages.map(m => {
+              const sender = m.fromMe ? 'You' : senderName;
+              return `${sender}: ${m.body}`;
+            });
+            chatHistory = `\nRecent Chat History:\n${historyLines.join('\n')}\n`;
+          }
         }
       } catch (e) {
         this.logger.warn(`Could not fetch chat history for ${senderName}: ${e.message}`);
