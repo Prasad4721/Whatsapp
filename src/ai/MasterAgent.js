@@ -47,12 +47,24 @@ class MasterAgent extends AgentBase {
     this.contactRepo = container.resolve('ContactRepository');
     this.memoryRepo = container.resolve('MemoryRepository');
     this.whatsappAdapter = container.resolve('WhatsAppAdapter');
+    this.localChatHistory = new Map();
     this._subscribeToMessages();
   }
 
   _subscribeToMessages() {
     this.eventBus.subscribe('message.received', async (payload) => {
       await this.processMessage(payload);
+    });
+
+    // Also listen to outbound messages to update local history
+    this.eventBus.subscribe('message.send', (payload) => {
+      const { to, text } = payload;
+      if (!this.localChatHistory.has(to)) {
+        this.localChatHistory.set(to, []);
+      }
+      const history = this.localChatHistory.get(to);
+      history.push(`You: ${text}`);
+      if (history.length > 10) history.shift();
     });
   }
 
@@ -66,6 +78,14 @@ class MasterAgent extends AgentBase {
     }
 
     this.logger.info(`MasterAgent processing message from ${senderName}`);
+
+    // Update local history for incoming message
+    if (!this.localChatHistory.has(from)) {
+      this.localChatHistory.set(from, []);
+    }
+    const history = this.localChatHistory.get(from);
+    history.push(`${senderName}: ${body}`);
+    if (history.length > 10) history.shift();
 
     try {
       // Fetch memories
@@ -90,7 +110,12 @@ class MasterAgent extends AgentBase {
           }
         }
       } catch (e) {
-        this.logger.warn(`Could not fetch chat history for ${senderName}: ${e.message}`);
+        this.logger.warn(`Could not fetch chat history from WhatsApp for ${senderName}: ${e.stack || e.message || e}`);
+        
+        // Fallback to local history
+        if (history.length > 0) {
+          chatHistory = `\nRecent Chat History (Local):\n${history.join('\n')}\n`;
+        }
       }
 
       const promptContext = `${memoryContext}${chatHistory}\nNew Message from ${senderName}:\n${body}`;
