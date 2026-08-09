@@ -36,6 +36,7 @@ class MasterAgent extends AgentBase {
   constructor(container) {
     super(container, 'MasterAgent');
     this.contactRepo = container.resolve('ContactRepository');
+    this.memoryRepo = container.resolve('MemoryRepository');
     this._subscribeToMessages();
   }
 
@@ -46,7 +47,7 @@ class MasterAgent extends AgentBase {
   }
 
   async processMessage(payload) {
-    const { from, senderName, body, timestamp } = payload;
+    const { from, senderName, body, timestamp, rawMessage } = payload;
     
     // Quick trivial filter to save API calls
     if (/^(ok|okay|k|👍)$/i.test(body.trim())) {
@@ -57,7 +58,32 @@ class MasterAgent extends AgentBase {
     this.logger.info(`MasterAgent processing message from ${senderName}`);
 
     try {
-      const response = await this.askAI(MASTER_SYSTEM_PROMPT, `Message from ${senderName}:\n${body}`, true);
+      // Fetch memories
+      const memories = this.memoryRepo.findAllByContact(from).map(m => m.content || m.memory);
+      let memoryContext = '';
+      if (memories.length > 0) {
+        memoryContext = `\nKnown facts/memories about ${senderName}:\n- ${memories.join('\n- ')}\n`;
+      }
+
+      // Fetch chat history
+      let chatHistory = '';
+      try {
+        if (rawMessage && typeof rawMessage.getChat === 'function') {
+          const chat = await rawMessage.getChat();
+          const messages = await chat.fetchMessages({ limit: 8 });
+          const historyLines = messages.map(m => {
+            const sender = m.fromMe ? 'You' : senderName;
+            return `${sender}: ${m.body}`;
+          });
+          chatHistory = `\nRecent Chat History:\n${historyLines.join('\n')}\n`;
+        }
+      } catch (e) {
+        this.logger.warn(`Could not fetch chat history for ${senderName}: ${e.message}`);
+      }
+
+      const promptContext = `${memoryContext}${chatHistory}\nNew Message from ${senderName}:\n${body}`;
+
+      const response = await this.askAI(MASTER_SYSTEM_PROMPT, promptContext, true);
       if (!response) return;
 
       const parsed = JSON.parse(response);
