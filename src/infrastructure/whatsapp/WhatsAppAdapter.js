@@ -49,6 +49,25 @@ class WhatsAppAdapter {
       if (msg.from === 'status@broadcast' || msg.to === 'status@broadcast') return;
       if (msg.fromMe) return;
 
+      const isGroup = msg.from.endsWith('@g.us');
+      
+      // If ignoreGroups is true in config, ignore entirely
+      if (isGroup && this.config.whatsapp.ignoreGroups) {
+        return;
+      }
+
+      // If it's a group, only process if the bot is explicitly mentioned,
+      // otherwise it will hit rate limits instantly on active groups.
+      if (isGroup) {
+        const botId = this.client.info.wid._serialized;
+        const botNumber = this.client.info.wid.user;
+        const isMentioned = (msg.mentionedIds && msg.mentionedIds.includes(botId)) || 
+                            (msg.body && msg.body.includes('@' + botNumber));
+        if (!isMentioned) {
+          return;
+        }
+      }
+
       let senderName = msg.from;
       try {
         const contact = await msg.getContact();

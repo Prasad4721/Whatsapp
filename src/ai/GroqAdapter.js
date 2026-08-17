@@ -8,8 +8,18 @@ class GroqAdapter {
 
   async generateCompletion(systemPrompt, userPrompt, jsonMode = false, maxTokens = 1024) {
     try {
+      let actualModel = this.config.groq.model || 'llama3-8b-8192';
+
+      // CRITICAL FIX: The `groq/compound` router completely ignores max_tokens and 
+      // assumes 6000+ tokens per request, instantly hitting the 8000 TPM limit 
+      // when multiple background agents run concurrently. We force background JSON 
+      // agents to use Qwen, which perfectly respects max_tokens.
+      if (jsonMode && actualModel.includes('compound')) {
+        actualModel = 'qwen/qwen3.6-27b';
+      }
+
       const payload = {
-        model: this.config.groq.model || 'llama3-8b-8192',
+        model: actualModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
