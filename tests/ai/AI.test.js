@@ -24,7 +24,7 @@ describe('AI Pipeline', () => {
       resolve: jest.fn((name) => {
         if (name === 'Logger') return { info: jest.fn(), error: jest.fn() };
         if (name === 'EventBus') return mockEventBus;
-        if (name === 'Config') return { get: jest.fn() };
+        if (name === 'Config') return { get: jest.fn(), groq: { model: 'test', endpoint: 'test', apiKey: 'test' } };
         if (name === 'GroqAdapter') return mockGroqAdapter;
         if (name === 'ContactRepository') return {};
       })
