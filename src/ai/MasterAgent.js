@@ -512,7 +512,7 @@ ${usefulMemories.map(memory => `- ${memory}`).join('\n')}
            * 8 messages is often far too small for real conversations.
            */
           const messages = await chat.fetchMessages({
-            limit: 100
+            limit: 10
           });
 
           if (Array.isArray(messages)) {

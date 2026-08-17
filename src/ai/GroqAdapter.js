@@ -15,6 +15,7 @@ class GroqAdapter {
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.3,
+        max_tokens: 1024, // Groq calculates TPM as (Input + Max Tokens). We must limit this to avoid 429s on small models.
       };
 
       if (jsonMode) {
