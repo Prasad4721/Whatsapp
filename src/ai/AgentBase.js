@@ -11,8 +11,8 @@ class AgentBase {
     throw new Error('execute() must be implemented by subclasses');
   }
 
-  async askAI(systemPrompt, userPrompt, jsonMode = false) {
-    return this.groqAdapter.generateCompletion(systemPrompt, userPrompt, jsonMode);
+  async askAI(systemPrompt, userPrompt, jsonMode = false, maxTokens = 1024) {
+    return this.groqAdapter.generateCompletion(systemPrompt, userPrompt, jsonMode, maxTokens);
   }
 }
 

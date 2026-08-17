@@ -43,7 +43,7 @@ class TaskAgent extends AgentBase {
       this.logger.info(`TaskAgent analyzing message from ${senderName}`);
       const prompt = `Current Time: ${new Date().toISOString()}\nMessage from ${senderName}:\n${body}`;
       
-      const response = await this.askAI(TASK_EXTRACTION_PROMPT, prompt, true);
+      const response = await this.askAI(TASK_EXTRACTION_PROMPT, prompt, true, 256);
       
       if (!response) return;
 

@@ -6,7 +6,7 @@ class GroqAdapter {
     this.config = container.resolve('Config');
   }
 
-  async generateCompletion(systemPrompt, userPrompt, jsonMode = false) {
+  async generateCompletion(systemPrompt, userPrompt, jsonMode = false, maxTokens = 1024) {
     try {
       const payload = {
         model: this.config.groq.model || 'llama3-8b-8192',
@@ -15,7 +15,8 @@ class GroqAdapter {
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.3,
-        max_tokens: 1024, // Groq calculates TPM as (Input + Max Tokens). We must limit this to avoid 429s on small models.
+        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens, // For OpenAI-compatible endpoints that require this instead
       };
 
       if (jsonMode) {
