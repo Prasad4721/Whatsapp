@@ -6,7 +6,7 @@ class Config {
     
     this.groq = {
       apiKey: requireEnv('GROQ_API_KEY'),
-      model: requireEnv('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+      model: requireEnv('GROQ_MODEL', 'groq/compound'),
       endpoint: 'https://api.groq.com/openai/v1/chat/completions',
     };
     this.behavior = {
