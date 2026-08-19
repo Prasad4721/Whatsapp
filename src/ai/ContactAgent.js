@@ -51,7 +51,7 @@ class ContactAgent extends AgentBase {
       this.logger.info(`ContactAgent analyzing message from ${senderName}`);
       const prompt = `Current Profile: ${JSON.stringify(existing)}\nMessage from ${senderName}:\n${body}`;
       
-      const response = await this.askAI(CONTACT_ANALYSIS_PROMPT, prompt, true, 256);
+      const response = await this.askAI(CONTACT_ANALYSIS_PROMPT, prompt, true, 512);
       
       if (!response) {
         // Still update lastSeen

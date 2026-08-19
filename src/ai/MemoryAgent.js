@@ -57,7 +57,7 @@ class MemoryAgent extends AgentBase {
 
     try {
       this.logger.info(`MemoryAgent analyzing message from ${senderName} for memories`);
-      const response = await this.askAI(MEMORY_EXTRACTION_PROMPT, `Message from ${senderName}:\n${body}`, true, 256);
+      const response = await this.askAI(MEMORY_EXTRACTION_PROMPT, `Message from ${senderName}:\n${body}`, true, 512);
       
       if (!response) return;
 
