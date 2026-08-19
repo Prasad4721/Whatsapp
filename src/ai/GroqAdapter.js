@@ -13,9 +13,9 @@ class GroqAdapter {
       // CRITICAL FIX: The `groq/compound` router completely ignores max_tokens and 
       // assumes 6000+ tokens per request, instantly hitting the 8000 TPM limit 
       // when multiple background agents run concurrently. We force background JSON 
-      // agents to use Qwen, which perfectly respects max_tokens.
+      // agents to use openai/gpt-oss-20b, which perfectly respects max_tokens AND json_object.
       if (jsonMode && actualModel.includes('compound')) {
-        actualModel = 'qwen/qwen3.6-27b';
+        actualModel = 'openai/gpt-oss-20b';
       }
 
       const payload = {
